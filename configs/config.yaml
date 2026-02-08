@@ -1,0 +1,22 @@
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  image_size: [224, 224]
+  batch_size: 32
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+
+training:
+  epochs: 5
+  optimizer: adam
+  loss: binary_crossentropy
+  metrics:
+    - accuracy
+
+model:
+  name: baseline_cnn
+  save_path: model.h5
+
+artifacts:
+  confusion_matrix: artifacts/confusion_matrix.png

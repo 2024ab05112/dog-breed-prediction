@@ -1,0 +1,19 @@
+stages:
+  preprocess:
+    cmd: python src/data/preprocess.py
+    deps:
+      - src/data/preprocess.py
+      - data/raw
+    outs:
+      - data/processed
+
+  train:
+    cmd: python src/models/train.py
+    deps:
+      - src/models/train.py
+      - src/models/model.py
+      - data/processed
+      - params.yaml
+    outs:
+      - model.h5
+      - artifacts/confusion_matrix.png
