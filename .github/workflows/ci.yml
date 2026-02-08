@@ -43,3 +43,35 @@ jobs:
         run: |
           docker tag mlops_assignment:latest ${{ secrets.DOCKERHUB_USERNAME }}/mlops_assignment:latest
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/mlops_assignment:latest
+
+  deploy-minikube:
+    runs-on: ubuntu-latest
+    needs: test-build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Set up Minikube
+        run: |
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          minikube start --driver=docker
+
+      - name: Load Docker image into Minikube
+        run: |
+          minikube image load mlops_assignment:latest
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+
+      - name: Run smoke tests
+        run: ./smoke_test.sh
+
