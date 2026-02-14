@@ -192,15 +192,51 @@ jobs:
       - name: Assign DNS Label to Ingress IP
         run: |
           NODE_RESOURCE_GROUP=$(az aks show --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
+          DNS_LABEL="dog-breed-prediction"
           
-          sleep 30
-          IP_NAME=$(az network public-ip list --resource-group $NODE_RESOURCE_GROUP --query "[?contains(name, 'kubernetes')].name" -o tsv | head -n 1)
+          echo "Node Resource Group: $NODE_RESOURCE_GROUP"
           
-          if [ ! -z "$IP_NAME" ]; then
-            echo "Assigning DNS label to IP: $IP_NAME"
-            az network public-ip update --resource-group $NODE_RESOURCE_GROUP --name $IP_NAME --dns-name dog-breed-prediction
+          # 1. Get the Ingress Service External IP (Wait if necessary)
+          echo "Waiting for Ingress Service External IP..."
+          EXTERNAL_IP=""
+          for i in {1..30}; do
+            EXTERNAL_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            if [ -n "$EXTERNAL_IP" ]; then
+              echo "Found External IP: $EXTERNAL_IP"
+              break
+            fi
+            echo "Waiting for IP... ($i/30)"
+            sleep 10
+          done
+          
+          if [ -z "$EXTERNAL_IP" ]; then
+            echo "Error: Could not get External IP for Ingress Service."
+            exit 1
+          fi
+
+          # 2. Find the Azure Public IP Resource Name for this IP
+          TARGET_IP_NAME=$(az network public-ip list --resource-group $NODE_RESOURCE_GROUP --query "[?ipAddress=='$EXTERNAL_IP'].name" -o tsv)
+          
+          if [ -z "$TARGET_IP_NAME" ]; then
+             echo "Error: Could not find Azure Public IP resource for IP $EXTERNAL_IP"
+             exit 1
+          fi
+          echo "Target Public IP Name: $TARGET_IP_NAME"
+
+          # 3. Check if DNS label is already used by another IP
+          EXISTING_IP_NAME=$(az network public-ip list --resource-group $NODE_RESOURCE_GROUP --query "[?dnsSettings.domainNameLabel=='$DNS_LABEL'].name" -o tsv)
+
+          if [ -n "$EXISTING_IP_NAME" ] && [ "$EXISTING_IP_NAME" != "$TARGET_IP_NAME" ]; then
+            echo "DNS label '$DNS_LABEL' is currently on old IP: $EXISTING_IP_NAME. Removing it..."
+            az network public-ip update --resource-group $NODE_RESOURCE_GROUP --name $EXISTING_IP_NAME --dns-name ""
+          fi
+
+          # 4. Assign DNS Label to Target IP
+          if [ "$EXISTING_IP_NAME" != "$TARGET_IP_NAME" ]; then
+             echo "Assigning DNS label '$DNS_LABEL' to $TARGET_IP_NAME..."
+             az network public-ip update --resource-group $NODE_RESOURCE_GROUP --name $TARGET_IP_NAME --dns-name $DNS_LABEL
           else
-            echo "Warning: Public IP not found yet. DNS might take another run to sync."
+             echo "DNS label '$DNS_LABEL' is already correctly assigned to $TARGET_IP_NAME."
           fi
 
       - name: Deploy to AKS
