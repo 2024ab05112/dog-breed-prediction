@@ -68,5 +68,3 @@ app.include_router(router)
 
 # Instrumentation
 Instrumentator().instrument(app).expose(app, endpoint="/api/metrics")
-
-if __name__ == "__main__":
