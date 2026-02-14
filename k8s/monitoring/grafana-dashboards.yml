@@ -20,7 +20,7 @@ data:
           "type": "graph",
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
           "targets": [
-            { "expr": "rate(api_requests_total[1m])", "legendFormat": "{{endpoint}}" }
+            { "expr": "sum(rate(http_requests_total[1m])) by (handler)", "legendFormat": "{{handler}}" }
           ],
           "datasource": "Prometheus"
         },
@@ -29,7 +29,7 @@ data:
           "type": "graph",
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
           "targets": [
-            { "expr": "histogram_quantile(0.95, rate(api_request_latency_seconds_bucket[5m]))", "legendFormat": "P95" }
+            { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "P95" }
           ],
           "datasource": "Prometheus"
         }
