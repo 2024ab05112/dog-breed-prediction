@@ -29,7 +29,7 @@ def test_predict_endpoint():
     buf.seek(0)
 
     response = client.post(
-        "/predict",
+        "/api/predict",
         files={"file": ("test.jpg", buf, "image/jpeg")}
     )
 
