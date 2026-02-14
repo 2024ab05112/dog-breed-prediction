@@ -15,5 +15,4 @@ data:
       - job_name: "dog-breed-api"
         metrics_path: /api/metrics
         static_configs:
-          - targets:
-              - dog-breed-api:80
+          - targets: ["dog-breed-api:80"]
