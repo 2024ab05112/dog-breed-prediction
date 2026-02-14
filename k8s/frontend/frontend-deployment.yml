@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: dog-breed-frontend
-          image: 2024ab05112/dog-breed-frontend:latest
+          image: repository-placeholder/dog-breed-prediction-frontend:latest
           imagePullPolicy: Always
           ports:
             - name: http

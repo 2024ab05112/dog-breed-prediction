@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: dog-breed-api
-          image: repository-placeholder/dog-breed-api:latest
+          image: repository-placeholder/dog-breed-prediction-api:latest
           imagePullPolicy: Always
           ports:
             - name: http

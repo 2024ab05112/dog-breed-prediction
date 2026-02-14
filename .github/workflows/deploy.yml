@@ -91,8 +91,8 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ${{ env.DOCKER_USERNAME }}/dog-breed-api:${{ github.sha }}
-            ${{ env.DOCKER_USERNAME }}/dog-breed-api:latest
+            ${{ env.DOCKER_USERNAME }}/dog-breed-prediction-api:${{ github.sha }}
+            ${{ env.DOCKER_USERNAME }}/dog-breed-prediction-api:latest
 
       - name: Build and push Frontend image
         if: needs.check-changes.outputs.frontend == 'true'
@@ -101,8 +101,8 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ${{ env.DOCKER_USERNAME }}/dog-breed-frontend:${{ github.sha }}
-            ${{ env.DOCKER_USERNAME }}/dog-breed-frontend:latest
+            ${{ env.DOCKER_USERNAME }}/dog-breed-prediction-frontend:${{ github.sha }}
+            ${{ env.DOCKER_USERNAME }}/dog-breed-prediction-frontend:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -178,8 +178,8 @@ jobs:
           fi
 
           # Replace in manifests
-          sed -i "s|image: .*/dog-breed-api:latest|image: ${{ env.DOCKER_USERNAME }}/dog-breed-api:$BACKEND_TAG|g" k8s/backend/backend-deployment.yml
-          sed -i "s|image: .*/dog-breed-frontend:latest|image: ${{ env.DOCKER_USERNAME }}/dog-breed-frontend:$FRONTEND_TAG|g" k8s/frontend/frontend-deployment.yml
+          sed -i "s|image: .*/dog-breed-prediction-api:latest|image: ${{ env.DOCKER_USERNAME }}/dog-breed-prediction-api:$BACKEND_TAG|g" k8s/backend/backend-deployment.yml
+          sed -i "s|image: .*/dog-breed-prediction-frontend:latest|image: ${{ env.DOCKER_USERNAME }}/dog-breed-prediction-frontend:$FRONTEND_TAG|g" k8s/frontend/frontend-deployment.yml
 
       - name: Install Nginx Ingress Controller
         run: |
