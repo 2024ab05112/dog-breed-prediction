@@ -13,7 +13,14 @@ ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = [
     "http://dog-breed-prediction.centralindia.cloudapp.azure.com",
     "https://dog-breed-prediction.centralindia.cloudapp.azure.com",
+    "http://13.71.50.185", 
 ]
+
+# Important for non-HTTPS or proxy setups
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
