@@ -1,0 +1,24 @@
+# Core ML
+tensorflow
+numpy
+pillow
+scikit-learn
+
+# Experiment Tracking
+mlflow
+
+# Data Versioning
+dvc
+
+# Visualization (for confusion matrix, curves)
+matplotlib
+seaborn
+
+# Utilities
+pyyaml
+tqdm
+fastapi
+uvicorn
+python-multipart
+httpx
+prometheus-fastapi-instrumentator

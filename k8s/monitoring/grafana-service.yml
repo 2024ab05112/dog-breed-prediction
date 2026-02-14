@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: dog-breed-prediction
+  annotations:
+    service.beta.kubernetes.io/azure-dns-label-name: dog-breed-grafana-2024ab05112
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: monitoring
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000

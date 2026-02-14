@@ -1,0 +1,221 @@
+name: Build and Deploy to AKS
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'SERVICE_ARCHITECTURE.md'
+      - 'wiki_content/**'
+  workflow_dispatch:
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  RESOURCE_GROUP: "DogBreedRG"
+  CLUSTER_NAME: "DogBreedCluster"
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      k8s: ${{ steps.filter.outputs.k8s }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+            k8s:
+              - 'k8s/**'
+              - '.github/workflows/**'
+
+  unit-test:
+    needs: check-changes
+    if: needs.check-changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          pip install -r unit-test-requirement.txt
+      - name: Lint with flake8
+        working-directory: ./backend
+        run: |
+          flake8 src . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 src . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Run tests
+        working-directory: ./backend
+        run: |
+          pytest tests/ --junitxml=test-report.xml
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: backend/test-report.xml
+
+
+  build-and-push:
+    needs: [check-changes, unit-test]
+    if: |
+      always() &&
+      needs.check-changes.result == 'success' &&
+      (needs.unit-test.result == 'success' || needs.unit-test.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Backend image
+        if: needs.check-changes.outputs.backend == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.DOCKER_USERNAME }}/dog-breed-api:${{ github.sha }}
+            ${{ env.DOCKER_USERNAME }}/dog-breed-api:latest
+
+      - name: Build and push Frontend image
+        if: needs.check-changes.outputs.frontend == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.DOCKER_USERNAME }}/dog-breed-frontend:${{ github.sha }}
+            ${{ env.DOCKER_USERNAME }}/dog-breed-frontend:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [check-changes, build-and-push, unit-test]
+    if: |
+      always() &&
+      (needs.check-changes.result == 'success') &&
+      (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped') &&
+      (needs.unit-test.result == 'success' || needs.unit-test.result == 'skipped')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Start AKS Cluster (if stopped)
+        run: |
+          STATUS=$(az aks show --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --query "powerState.code" -o tsv)
+          echo "Current Cluster Status: $STATUS"
+          if [ "$STATUS" == "Stopped" ]; then
+            echo "Cluster is stopped. Starting it now..."
+            az aks start --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }}
+          else
+            echo "Cluster is already running or in transition. Skipping start."
+          fi
+
+      - name: Set up kubelogin
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: 'v0.0.25'
+
+      - name: Get K8s context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ env.RESOURCE_GROUP }}
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          admin: 'false'
+          use-kubelogin: 'true'
+
+      - name: Delete Old Deployments (Purge)
+        run: |
+          echo "Deleting old deployments as requested..."
+          kubectl delete deployment heart-disease-api --ignore-not-found
+          kubectl delete service heart-disease-service --ignore-not-found
+          kubectl delete deployment heart-disease-frontend --ignore-not-found
+          kubectl delete service heart-disease-frontend --ignore-not-found
+          kubectl delete deployment dog-breed-api --ignore-not-found
+          kubectl delete service dog-breed-api --ignore-not-found
+          kubectl delete deployment dog-breed-frontend --ignore-not-found
+          kubectl delete service dog-breed-frontend-service --ignore-not-found
+
+      - name: Replace image tags in manifests
+        run: |
+          # 1. Backend Tag
+          BACKEND_TAG="latest"
+          if [[ "${{ needs.check-changes.outputs.backend }}" == "true" ]]; then
+            BACKEND_TAG="${{ github.sha }}"
+            echo "Backend changed. Using SHA: $BACKEND_TAG"
+          else
+            echo "Backend unchanged. Using existing tag: $BACKEND_TAG"
+          fi
+
+          # 2. Frontend Tag
+          FRONTEND_TAG="latest"
+          if [[ "${{ needs.check-changes.outputs.frontend }}" == "true" ]]; then
+            FRONTEND_TAG="${{ github.sha }}"
+            echo "Frontend changed. Using SHA: $FRONTEND_TAG"
+          else
+             echo "Frontend unchanged. Using existing tag: $FRONTEND_TAG"
+          fi
+
+          # Replace in manifests
+          sed -i "s|image: .*/dog-breed-api:latest|image: ${{ env.DOCKER_USERNAME }}/dog-breed-api:$BACKEND_TAG|g" k8s/backend/backend-deployment.yml
+          sed -i "s|image: .*/dog-breed-frontend:latest|image: ${{ env.DOCKER_USERNAME }}/dog-breed-frontend:$FRONTEND_TAG|g" k8s/frontend/frontend-deployment.yml
+
+      - name: Install Nginx Ingress Controller
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
+          
+          # Wait for the service to be created
+          echo "Waiting for Ingress Controller Service..."
+          kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s
+
+      - name: Assign DNS Label to Ingress IP
+        run: |
+          NODE_RESOURCE_GROUP=$(az aks show --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
+          
+          sleep 30
+          IP_NAME=$(az network public-ip list --resource-group $NODE_RESOURCE_GROUP --query "[?contains(name, 'kubernetes')].name" -o tsv | head -n 1)
+          
+          if [ ! -z "$IP_NAME" ]; then
+            echo "Assigning DNS label to IP: $IP_NAME"
+            az network public-ip update --resource-group $NODE_RESOURCE_GROUP --name $IP_NAME --dns-name dog-breed-prediction
+          else
+            echo "Warning: Public IP not found yet. DNS might take another run to sync."
+          fi
+
+      - name: Deploy to AKS
+        uses: Azure/k8s-deploy@v4
+        with:
+          action: deploy
+          manifests: |
+            k8s/common/ingress.yml
+            k8s/backend/backend-deployment.yml
+            k8s/backend/backend-service.yml
+            k8s/frontend/frontend-deployment.yml
+            k8s/monitoring/prometheus-config.yml
+            k8s/monitoring/prometheus-deployment.yml
+            k8s/monitoring/prometheus-service.yml
+            k8s/monitoring/grafana-config.yml
+            k8s/monitoring/grafana-dashboards.yml
+            k8s/monitoring/grafana-deployment.yml
+            k8s/monitoring/grafana-service.yml

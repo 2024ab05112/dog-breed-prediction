@@ -21,3 +21,6 @@ fastapi
 uvicorn
 python-multipart
 httpx
+pytest
+flake8
+httpx

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Breed Classifier</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; background-color: #f0f2f5; color: #333; }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 40px; }
+        .form-container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        .form-group { margin-bottom: 25px; }
+        label { display: block; margin-bottom: 15px; font-weight: 600; font-size: 1.1em; color: #555; }
+        input[type="file"] { display: none; }
+        .custom-file-upload { display: inline-block; padding: 12px 24px; cursor: pointer; background-color: #e9ecef; border: 2px dashed #ced4da; border-radius: 8px; font-weight: 500; transition: all 0.3s; }
+        .custom-file-upload:hover { background-color: #dee2e6; border-color: #adb5bd; }
+        button { width: 100%; padding: 15px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: 600; transition: background-color 0.3s; margin-top: 20px; }
+        button:hover { background-color: #0056b3; }
+        .result-container { margin-top: 30px; padding: 25px; border-radius: 12px; text-align: center; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .result-title { font-size: 2em; font-weight: 800; color: #2c3e50; margin: 0; }
+        .success { color: #28a745; }
+        .dog { color: #e67e22; }
+        .cat { color: #9b59b6; }
+        .confidence { font-size: 1.2em; color: #6c757d; margin-top: 10px; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .prob-bar { display: flex; align-items: center; margin-top: 10px; }
+        .bar-container { flex-grow: 1; background-color: #e9ecef; height: 10px; border-radius: 5px; margin: 0 10px; overflow: hidden; }
+        .bar { height: 100%; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>🐶 Dog Breed Classifier 🐱</h1>
+
+    <div class="form-container">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="file-upload" class="custom-file-upload">
+                    <span id="file-label">📷 Click to Upload Image</span>
+                </label>
+                <input id="file-upload" type="file" name="image" accept="image/*" required onchange="updateFileName(this)">
+            </div>
+            
+            <button type="submit">Classify Image</button>
+        </form>
+    </div>
+
+    {% if prediction %}
+    <div class="result-container">
+        <h2 class="result-title {% if 'Dog' in prediction %}dog{% else %}cat{% endif %}">
+            It's a {{ prediction }}!
+        </h2>
+        <p class="confidence">Confidence: <strong>{{ confidence }}</strong></p>
+        
+        {% if probabilities %}
+        <div style="margin-top: 20px; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto;">
+            <div class="prob-bar">
+                <span style="width: 40px;">Dog</span>
+                <div class="bar-container">
+                    <div class="bar" style="width: {{ probabilities.dog|floatformat:2 }}%; background-color: #e67e22;"></div>
+                </div>
+                <span>{{ probabilities.dog|floatformat:2 }}</span>
+            </div>
+            <div class="prob-bar">
+                <span style="width: 40px;">Cat</span>
+                <div class="bar-container">
+                    <div class="bar" style="width: {{ probabilities.cat|floatformat:2 }}%; background-color: #9b59b6;"></div>
+                </div>
+                <span>{{ probabilities.cat|floatformat:2 }}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="error">
+        <h3>Something went wrong</h3>
+        <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <script>
+        function updateFileName(input) {
+            var fileName = input.files[0].name;
+            document.getElementById('file-label').innerText = "📷 " + fileName;
+        }
+    </script>
+</body>
+</html>

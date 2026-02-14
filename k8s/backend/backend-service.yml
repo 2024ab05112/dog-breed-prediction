@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dog-breed-api
+  labels:
+    app.kubernetes.io/name: dog-breed-api
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: dog-breed-prediction
+spec:
+  type: LoadBalancer 
+  selector:
+    app.kubernetes.io/name: dog-breed-api
+    app.kubernetes.io/component: backend
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8000
