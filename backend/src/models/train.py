@@ -68,8 +68,8 @@ def main():
     val_ds = dataset.skip(train_size)
     
     # Apply preprocessing pipeline
-    train_ds = train_ds.map(preprocess).start_async().shuffle(1000).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
-    val_ds = val_ds.map(preprocess).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+    train_ds = train_ds.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(1000).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+    val_ds = val_ds.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
     model = build_baseline_cnn()
 
