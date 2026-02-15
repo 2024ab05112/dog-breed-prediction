@@ -80,6 +80,12 @@ jobs:
         with:
           lfs: true
 
+      - name: Train Model and Generate Artifact
+        working-directory: ./backend
+        run: |
+          pip install -r requirements.txt
+          python -m src.models.train
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
