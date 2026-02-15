@@ -97,7 +97,7 @@ jobs:
         with:
           name: trained-model
           path: backend/model.h5
-          retention-days: 1
+          retention-days: 5
 
   build-backend:
     needs: [check-changes, train-model] # Waits for training to complete
