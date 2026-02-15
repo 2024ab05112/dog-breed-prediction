@@ -145,6 +145,10 @@
             background: #fafafa;
             cursor: pointer;
             transition: border-color 0.3s, background 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .upload-area:hover {
@@ -154,16 +158,16 @@
 
         .upload-icon {
             font-size: 20px;
-            text-transform: uppercase;
-            font-weight: bold;
             color: #9ca3af;
-            margin-bottom: 10px;
-            border: 2px solid #9ca3af;
+            margin-bottom: 15px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            line-height: 46px;
-            margin: 0 auto 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
 
         input[type="file"] {
@@ -195,18 +199,24 @@
             height: 250px;
             border-radius: 15px;
             overflow: hidden;
-            background: #eee;
+            background: #f8f9fa;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #aaa;
+            border: 1px solid #eee;
         }
 
         .result-img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .result-img:hover {
+            transform: scale(1.05);
         }
 
         .prob-row {
@@ -303,7 +313,7 @@
     <div class="hero">
         <div class="hero-text">
             <h1>Is it a Dog or a Cat?</h1>
-            <p>Powered by MobileNetV2 & MLOps Automated Pipeline</p>
+            <p>Powered by Advanced Deep Learning & MLOps Automated Pipeline</p>
         </div>
     </div>
 
@@ -314,9 +324,17 @@
             <form method="post" enctype="multipart/form-data" id="uploadForm">
                 {% csrf_token %}
                 <label for="imageUpload" class="upload-area">
-                    <div class="upload-icon">UP</div>
-                    <h3 id="fileName">Drag & Drop or Click to Upload</h3>
-                    <p style="color: #999; font-size: 0.9em;">Supports JPG, PNG</p>
+                    <div class="upload-icon">
+                        <!-- SVG Upload Cloud Icon -->
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#5c2d91" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <h3 id="fileName" style="margin: 0; font-size: 1.2rem;">Drag & Drop or Click to Upload</h3>
+                    <p style="color: #999; font-size: 0.9em; margin-top: 5px;">Supports JPG, PNG</p>
                 </label>
                 <input type="file" id="imageUpload" name="image" accept="image/*" required onchange="showPreview(this)">
 
@@ -330,12 +348,22 @@
 
             <div class="result-img-container">
                 {% if prediction %}
-                <!-- We will use a placeholder or the result text -->
-                <div style="font-size: 2rem; font-weight: bold; color: #5c2d91;">
-                    {% if 'Dog' in prediction %}DOG FOUND{% else %}CAT FOUND{% endif %}
-                </div>
+                {% if 'Dog' in prediction %}
+                <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80"
+                    alt="Dog Prediction" class="result-img">
                 {% else %}
-                <p>Result will appear here</p>
+                <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=600&q=80"
+                    alt="Cat Prediction" class="result-img">
+                {% endif %}
+                {% else %}
+                <div style="text-align: center; padding: 20px;">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <p style="margin-top: 10px; color: #aaa;">Result will appear here</p>
+                </div>
                 {% endif %}
             </div>
 
@@ -389,14 +417,13 @@
             </div>
             <div class="feature-item">
                 <h3>Transfer Learning</h3>
-                <p>Utilizes <strong>MobileNetV2</strong>, a state-of-the-art lightweight neural network, fine-tuned for
+                <p>Utilizes <strong>Custom CNN</strong>, a state-of-the-art lightweight neural network, fine-tuned for
                     high accuracy and fast inference on edge/cloud devices.</p>
             </div>
             <div class="feature-item">
                 <h3>Secure & Scalable</h3>
                 <p>Deployed on <strong>Azure Kubernetes Service (AKS)</strong> with production-grade Ingress and
-                    <strong>HTTPS (Let's Encrypt)</strong> security.
-                </p>
+                    <strong>HTTPS (Let's Encrypt)</strong> security.</p>
             </div>
             <div class="feature-item">
                 <h3>Full Observability</h3>
@@ -407,7 +434,7 @@
     </div>
 
     <footer>
-        <p>© 2026 MLOps Assignment 2 | Group 2024ab05112</p>
+        <p>© 2026 MLOps Assignment 2 | Group 103</p>
         <p>Built with Passion using FastAPI, Django, and Kubernetes</p>
     </footer>
 
@@ -421,7 +448,6 @@
             }
         }
     </script>
-
 </body>
 
 </html>
