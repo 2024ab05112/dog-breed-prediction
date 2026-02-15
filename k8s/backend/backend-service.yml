@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/component: backend
     app.kubernetes.io/part-of: dog-breed-prediction
 spec:
-  type: LoadBalancer 
+  type: ClusterIP 
   selector:
     app.kubernetes.io/name: dog-breed-api
     app.kubernetes.io/component: backend
