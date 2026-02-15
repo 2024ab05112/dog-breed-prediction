@@ -20,10 +20,10 @@ This repository contains an end-to-end MLOps solution for predicting dog breeds 
 - **Cloud Provider**: Microsoft Azure
 
 ## Live Demo
-- **App URL**: [http://dog-breed-prediction.centralindia.cloudapp.azure.com/](http://dog-breed-prediction.centralindia.cloudapp.azure.com/)
-- **API Docs**: [http://dog-breed-prediction.centralindia.cloudapp.azure.com/docs](http://dog-breed-prediction.centralindia.cloudapp.azure.com/docs)
-- **Grafana**: [http://dog-breed-prediction.centralindia.cloudapp.azure.com/grafana/](http://dog-breed-prediction.centralindia.cloudapp.azure.com/grafana/)
-- **Prometheus**: [http://dog-breed-prediction.centralindia.cloudapp.azure.com/prometheus/](http://dog-breed-prediction.centralindia.cloudapp.azure.com/prometheus/)
+- **App URL**: [https://dog-breed-prediction.centralindia.cloudapp.azure.com/](https://dog-breed-prediction.centralindia.cloudapp.azure.com/)
+- **API Docs**: [https://dog-breed-prediction.centralindia.cloudapp.azure.com/docs](https://dog-breed-prediction.centralindia.cloudapp.azure.com/docs)
+- **Grafana**: [https://dog-breed-prediction.centralindia.cloudapp.azure.com/grafana/](https://dog-breed-prediction.centralindia.cloudapp.azure.com/grafana/)
+- **Prometheus**: [https://dog-breed-prediction.centralindia.cloudapp.azure.com/prometheus/](https://dog-breed-prediction.centralindia.cloudapp.azure.com/prometheus/)
 
 ## Project Structure
 ```
