@@ -66,23 +66,54 @@ jobs:
           name: test-report
           path: backend/test-report.xml
 
-
-  build-and-push:
+  # New dedicated job for Model Training (Visualization & Modularity)
+  train-model:
     needs: [check-changes, unit-test]
-    if: |
-      always() &&
-      needs.check-changes.result == 'success' &&
-      (needs.unit-test.result == 'success' || needs.unit-test.result == 'skipped')
+    if: needs.check-changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Train Model and Generate Artifact
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
         working-directory: ./backend
         run: |
           pip install -r requirements.txt
+
+      - name: Train Model (MobileNetV2)
+        working-directory: ./backend
+        run: |
           python -m src.models.train
+      
+      # Upload the trained model as an artifact so the next job can use it
+      - name: Upload Trained Model Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model
+          path: backend/model.h5
+          retention-days: 1
+
+  build-and-push:
+    needs: [check-changes, train-model] # Waits for training to complete
+    if: needs.check-changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Download the model trained in the previous job
+      - name: Download Trained Model
+        uses: actions/download-artifact@v4
+        with:
+          name: trained-model
+          path: backend
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -91,79 +122,46 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Backend image
-        if: needs.check-changes.outputs.backend == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./backend
+          file: ./backend/Dockerfile
           push: true
           tags: |
-            ${{ env.DOCKER_USERNAME }}/dog-breed-prediction-api:${{ github.sha }}
-            ${{ env.DOCKER_USERNAME }}/dog-breed-prediction-api:latest
+            ${{ secrets.DOCKER_USERNAME }}/dog-breed-prediction-api:latest
+            ${{ secrets.DOCKER_USERNAME }}/dog-breed-prediction-api:${{ github.sha }}
 
       - name: Build and push Frontend image
-        if: needs.check-changes.outputs.frontend == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
+          file: ./frontend/Dockerfile
           push: true
           tags: |
-            ${{ env.DOCKER_USERNAME }}/dog-breed-prediction-frontend:${{ github.sha }}
-            ${{ env.DOCKER_USERNAME }}/dog-breed-prediction-frontend:latest
+            ${{ secrets.DOCKER_USERNAME }}/dog-breed-prediction-frontend:latest
+            ${{ secrets.DOCKER_USERNAME }}/dog-breed-prediction-frontend:${{ github.sha }}
 
   deploy:
+    needs: [build-and-push, check-changes]
     runs-on: ubuntu-latest
-    needs: [check-changes, build-and-push, unit-test]
-    if: |
-      always() &&
-      (needs.check-changes.result == 'success') &&
-      (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped') &&
-      (needs.unit-test.result == 'success' || needs.unit-test.result == 'skipped')
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Start AKS Cluster (if stopped)
-        run: |
-          STATUS=$(az aks show --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --query "powerState.code" -o tsv)
-          echo "Current Cluster Status: $STATUS"
-          if [ "$STATUS" == "Stopped" ]; then
-            echo "Cluster is stopped. Starting it now..."
-            az aks start --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }}
-          else
-            echo "Cluster is already running or in transition. Skipping start."
-          fi
-
-      - name: Set up kubelogin
-        uses: azure/use-kubelogin@v1
-        with:
-          kubelogin-version: 'v0.0.25'
-
-      - name: Get K8s context
+      - name: Set AKS Context
         uses: azure/aks-set-context@v3
         with:
           resource-group: ${{ env.RESOURCE_GROUP }}
           cluster-name: ${{ env.CLUSTER_NAME }}
-          admin: 'false'
-          use-kubelogin: 'true'
 
-      - name: Delete Old Deployments (Purge)
-        run: |
-          echo "Deleting old deployments as requested..."
-          kubectl delete deployment heart-disease-api --ignore-not-found
-          kubectl delete service heart-disease-service --ignore-not-found
-          kubectl delete deployment heart-disease-frontend --ignore-not-found
-          kubectl delete service heart-disease-frontend --ignore-not-found
-          kubectl delete deployment dog-breed-api --ignore-not-found
-          kubectl delete service dog-breed-api --ignore-not-found
-          kubectl delete deployment dog-breed-frontend --ignore-not-found
-          kubectl delete service dog-breed-frontend-service --ignore-not-found
-
-      - name: Replace image tags in manifests
+      # Update Image Tags in Manifests based on changes
+      - name: Update Manifests with Image Tags
         run: |
           # 1. Backend Tag
           BACKEND_TAG="latest"
@@ -184,81 +182,36 @@ jobs:
           fi
 
           # Replace in manifests
-          sed -i "s|image: .*/dog-breed-prediction-api:latest|image: ${{ env.DOCKER_USERNAME }}/dog-breed-prediction-api:$BACKEND_TAG|g" k8s/backend/backend-deployment.yml
-          sed -i "s|image: .*/dog-breed-prediction-frontend:latest|image: ${{ env.DOCKER_USERNAME }}/dog-breed-prediction-frontend:$FRONTEND_TAG|g" k8s/frontend/frontend-deployment.yml
-
-      - name: Install Nginx Ingress Controller
-        run: |
-          kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
-          
-          # Wait for the service to be created
-          echo "Waiting for Ingress Controller Service..."
-          kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s
-
-      - name: Assign DNS Label to Ingress IP
-        run: |
-          NODE_RESOURCE_GROUP=$(az aks show --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
-          DNS_LABEL="dog-breed-prediction"
-          
-          echo "Node Resource Group: $NODE_RESOURCE_GROUP"
-          
-          # 1. Get the Ingress Service External IP (Wait if necessary)
-          echo "Waiting for Ingress Service External IP..."
-          EXTERNAL_IP=""
-          for i in {1..30}; do
-            EXTERNAL_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-            if [ -n "$EXTERNAL_IP" ]; then
-              echo "Found External IP: $EXTERNAL_IP"
-              break
-            fi
-            echo "Waiting for IP... ($i/30)"
-            sleep 10
-          done
-          
-          if [ -z "$EXTERNAL_IP" ]; then
-            echo "Error: Could not get External IP for Ingress Service."
-            exit 1
-          fi
-
-          # 2. Find the Azure Public IP Resource Name for this IP
-          TARGET_IP_NAME=$(az network public-ip list --resource-group $NODE_RESOURCE_GROUP --query "[?ipAddress=='$EXTERNAL_IP'].name" -o tsv)
-          
-          if [ -z "$TARGET_IP_NAME" ]; then
-             echo "Error: Could not find Azure Public IP resource for IP $EXTERNAL_IP"
-             exit 1
-          fi
-          echo "Target Public IP Name: $TARGET_IP_NAME"
-
-          # 3. Check if DNS label is already used by another IP
-          EXISTING_IP_NAME=$(az network public-ip list --resource-group $NODE_RESOURCE_GROUP --query "[?dnsSettings.domainNameLabel=='$DNS_LABEL'].name" -o tsv)
-
-          if [ -n "$EXISTING_IP_NAME" ] && [ "$EXISTING_IP_NAME" != "$TARGET_IP_NAME" ]; then
-            echo "DNS label '$DNS_LABEL' is currently on old IP: $EXISTING_IP_NAME. Removing it..."
-            az network public-ip update --resource-group $NODE_RESOURCE_GROUP --name $EXISTING_IP_NAME --dns-name ""
-          fi
-
-          # 4. Assign DNS Label to Target IP
-          if [ "$EXISTING_IP_NAME" != "$TARGET_IP_NAME" ]; then
-             echo "Assigning DNS label '$DNS_LABEL' to $TARGET_IP_NAME..."
-             az network public-ip update --resource-group $NODE_RESOURCE_GROUP --name $TARGET_IP_NAME --dns-name $DNS_LABEL
-          else
-             echo "DNS label '$DNS_LABEL' is already correctly assigned to $TARGET_IP_NAME."
-          fi
+          sed -i "s|image: .*/dog-breed-prediction-api:latest|image: ${{ secrets.DOCKER_USERNAME }}/dog-breed-prediction-api:$BACKEND_TAG|g" k8s/backend/backend-deployment.yml
+          sed -i "s|image: .*/dog-breed-prediction-frontend:latest|image: ${{ secrets.DOCKER_USERNAME }}/dog-breed-prediction-frontend:$FRONTEND_TAG|g" k8s/frontend/frontend-deployment.yml
 
       - name: Deploy to AKS
-        uses: Azure/k8s-deploy@v4
-        with:
-          action: deploy
-          manifests: |
-            k8s/common/ingress.yml
-            k8s/backend/backend-deployment.yml
-            k8s/backend/backend-service.yml
-            k8s/frontend/frontend-deployment.yml
-            k8s/monitoring/prometheus-config.yml
-            k8s/monitoring/prometheus-deployment.yml
-            k8s/monitoring/prometheus-service.yml
-            k8s/monitoring/grafana-config.yml
-            k8s/monitoring/grafana-dashboards.yml
+        run: |
+          # Apply Manifests
+          kubectl apply -f k8s/common/ingress.yml
+          kubectl apply -f k8s/backend/backend-deployment.yml
+          kubectl apply -f k8s/backend/backend-service.yml
+          kubectl apply -f k8s/frontend/frontend-deployment.yml
+          kubectl apply -f k8s/frontend/frontend-service.yml
+          
+          # Monitoring Stack
+          kubectl apply -f k8s/monitoring/prometheus-config.yml
+          kubectl apply -f k8s/monitoring/prometheus-deployment.yml
+          kubectl apply -f k8s/monitoring/prometheus-service.yml
+          kubectl apply -f k8s/monitoring/grafana-config.yml
+          kubectl apply -f k8s/monitoring/grafana-dashboards.yml
+
+  # Dedicated Smoke Test Job (Visualization)
+  smoke-test:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Wait for Pods to be Ready
+        run: sleep 60 # Give K8s a moment to roll out
+        
       - name: Post-Deploy Smoke Test
         run: |
           chmod +x post_deploy_smoke_test.sh
