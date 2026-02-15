@@ -57,7 +57,9 @@ All external requests are handled by the **Nginx Ingress Controller**. This arch
 - **Path-Based Routing**: Clean URLs for all tools under a single domain.
 
 ### 2. Implementation Overview
-- **Routing**: Traffic is routed based on the URL path (`/` for Frontend, `/api` for Backend, etc.).
+- **Routing**: Traffic is routed based on the URL path (`/` for Frontend, `/api` for Backend).
+- **Security & Access**: Uses **cert-manager** in the cluster to automatically provision **Let's Encrypt SSL Certificates**, enabling secure HTTPS access.
+- **Isolation**: Each component runs in separate pods, ensuring fault tolerance.
 
 ### 3. Model Training Pipeline (CI/CT)
 - **Architecture**: Uses **MobileNetV2** (pre-trained on ImageNet) as a feature extractor with a custom classification head.

@@ -7,6 +7,7 @@ This repository contains an end-to-end MLOps solution for predicting dog breeds 
 - **Backend**: High-performance FastAPI service hosting a **MobileNetV2** (Transfer Learning) model.
 - **Automated Training (CT)**: The model is **retrained automatically** on every push in the CI pipeline using a subset of the Cats vs Dogs dataset.
 - **Infrastructure**: Production-grade Kubernetes deployment on Azure (AKS).
+- **Secure Access**: Fully automated **HTTPS/TLS** enabled via **Let's Encrypt** and `cert-manager`.
 - **Automation**: End-to-end CI/CD pipelines using GitHub Actions for training, testing, building, and deployment.
 - **Observability**: Real-time monitoring with Prometheus metrics and Grafana dashboards.
 
