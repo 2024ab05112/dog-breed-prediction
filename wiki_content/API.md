@@ -3,7 +3,7 @@
 The backend service is built using **FastAPI** and exposes RESTful endpoints for prediction and monitoring.
 
 ## Base URL
-Public Entry Point (via Ingress): `http://dog-breed-prediction.centralindia.cloudapp.azure.com/api`
+Public Entry Point (via Ingress): `https://dog-breed-prediction.centralindia.cloudapp.azure.com/api`
 
 ## Endpoints
 
@@ -23,7 +23,7 @@ Classifies an uploaded image as either a Cat or a Dog.
 Upload an image file using `curl` or Postman to the endpoint.
 
 ```bash
-curl -X POST "http://dog-breed-prediction.centralindia.cloudapp.azure.com/api/predict" \
+curl -X POST "https://dog-breed-prediction.centralindia.cloudapp.azure.com/api/predict" \
   -H "accept: application/json" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@/path/to/image.jpg"
@@ -50,7 +50,7 @@ curl -X POST "http://dog-breed-prediction.centralindia.cloudapp.azure.com/api/pr
 
 ### 2. Interactive Documentation (Swagger UI)
 FastAPI automatically generates interactive Swagger documentation.
-- **URL**: `/docs` (Full path: `http://dog-breed-prediction.centralindia.cloudapp.azure.com/docs`)
+- **URL**: `/docs` (Full path: `https://dog-breed-prediction.centralindia.cloudapp.azure.com/docs`)
 - **Use Case**: Test API endpoints directly from the browser.
 
 ### 3. Health Check
