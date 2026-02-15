@@ -21,16 +21,16 @@ check_endpoint() {
         status_code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL$endpoint")
         
         if [ "$status_code" -eq "$expected_code" ]; then
-            echo "✅ Success: $endpoint returned $status_code"
+            echo "SUCCESS: $endpoint returned $status_code"
             return 0
         fi
         
-        echo "⚠️  Attempt $((retries+1))/$MAX_RETRIES: Received $status_code (Expected $expected_code). Retrying in ${SLEEP_TIME}s..."
+        echo "WARNING: Attempt $((retries+1))/$MAX_RETRIES: Received $status_code (Expected $expected_code). Retrying in ${SLEEP_TIME}s..."
         sleep $SLEEP_TIME
         retries=$((retries+1))
     done
     
-    echo "❌ Failed to reach $endpoint after $MAX_RETRIES attempts."
+    echo "FAILED: Failed to reach $endpoint after $MAX_RETRIES attempts."
     return 1
 }
 
@@ -56,5 +56,5 @@ if ! check_endpoint "/docs" 200; then
     exit 1
 fi
 
-echo "All Smoke Tests Passed Successfully! 🚀"
+echo "All Smoke Tests Passed Successfully!"
 exit 0
