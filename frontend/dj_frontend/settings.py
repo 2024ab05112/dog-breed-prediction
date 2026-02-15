@@ -1,4 +1,5 @@
 import os
+# Version: 1.1 SSL Enabled
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent

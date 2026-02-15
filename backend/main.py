@@ -1,3 +1,4 @@
+# Version: 1.1 SSL Enabled
 from fastapi import FastAPI, UploadFile, File, APIRouter
 import tensorflow as tf
 import numpy as np
