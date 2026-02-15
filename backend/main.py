@@ -8,7 +8,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI(title="Dog Breed Inference API")
 
-# Attempt to load, mock if not present for local test without model
+# Attempt to load model (with Git LFS support)
 try:
     model = tf.keras.models.load_model("model.h5")
     CLASS_NAMES = ["Cat", "Dog"] # Default from user provided code
