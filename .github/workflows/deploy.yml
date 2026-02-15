@@ -259,5 +259,7 @@ jobs:
             k8s/monitoring/prometheus-service.yml
             k8s/monitoring/grafana-config.yml
             k8s/monitoring/grafana-dashboards.yml
-            k8s/monitoring/grafana-deployment.yml
-            k8s/monitoring/grafana-service.yml
+      - name: Post-Deploy Smoke Test
+        run: |
+          chmod +x post_deploy_smoke_test.sh
+          ./post_deploy_smoke_test.sh
