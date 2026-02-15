@@ -7,14 +7,19 @@ metadata:
     app.kubernetes.io/part-of: dog-breed-prediction
   annotations:
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true" # Force HTTPS
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
     # Essential for Prometheus/Grafana subpaths
     nginx.ingress.kubernetes.io/configuration-snippet: |
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto $scheme;
 spec:
+  tls:
+    - hosts:
+        - dog-breed-prediction.centralindia.cloudapp.azure.com
+      secretName: dog-breed-tls # Cert-manager will store certificate here
   rules:
   - host: dog-breed-prediction.centralindia.cloudapp.azure.com
     http:

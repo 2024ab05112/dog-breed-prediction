@@ -203,6 +203,24 @@ jobs:
           sed -i "s|image: .*/dog-breed-prediction-api:latest|image: ${{ secrets.DOCKER_USERNAME }}/dog-breed-prediction-api:$BACKEND_TAG|g" k8s/backend/backend-deployment.yml
           sed -i "s|image: .*/dog-breed-prediction-frontend:latest|image: ${{ secrets.DOCKER_USERNAME }}/dog-breed-prediction-frontend:$FRONTEND_TAG|g" k8s/frontend/frontend-deployment.yml
 
+      - name: Install Cert-Manager (For Let's Encrypt SSL)
+        run: |
+          echo "Checking if cert-manager is installed..."
+          if ! kubectl get namespace cert-manager &> /dev/null; then
+             echo "Installing cert-manager..."
+             kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
+             
+             echo "Waiting for cert-manager to be ready..."
+             sleep 30 # Give CRDs time to register
+             kubectl wait --namespace cert-manager --for=condition=ready pod --selector=app.kubernetes.io/instance=cert-manager --timeout=300s
+          else
+             echo "cert-manager is already installed."
+          fi
+
+      - name: Apply ClusterIssuer (Let's Encrypt)
+        run: |
+           kubectl apply -f k8s/common/cluster-issuer.yml
+
       - name: Deploy to AKS
         run: |
           # Apply Manifests
@@ -210,6 +228,7 @@ jobs:
           kubectl apply -f k8s/backend/backend-deployment.yml
           kubectl apply -f k8s/backend/backend-service.yml
           kubectl apply -f k8s/frontend/frontend-deployment.yml
+          # Removed redundant frontend-service reference as it's merged
           
           # Monitoring Stack
           kubectl apply -f k8s/monitoring/prometheus-config.yml
