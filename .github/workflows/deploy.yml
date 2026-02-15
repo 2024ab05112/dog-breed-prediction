@@ -172,6 +172,14 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Start AKS Cluster
+        run: az aks start --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --no-wait || true
+
+      - name: Wait for Cluster to be Running
+        run: |
+          echo "Waiting for AKS cluster to be in Succeeded state..."
+          az aks wait --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --created --interval 10 --timeout 300
+
       - name: Set AKS Context
         uses: azure/aks-set-context@v3
         with:
