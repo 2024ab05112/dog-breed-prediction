@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Dog Cat Classifier - MLOps Assignment 2</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
             --primary: #5c2d91;
@@ -52,9 +53,12 @@
         nav a {
             color: rgba(255, 255, 255, 0.8);
             text-decoration: none;
-            margin-left: 30px;
+            margin-left: 20px;
             font-weight: 600;
             transition: color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
         nav a:hover {
@@ -287,6 +291,35 @@
             line-height: 1.6;
         }
 
+        .links-grid {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .link-btn {
+            padding: 12px 25px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #555;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .link-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
         footer {
             text-align: center;
             padding: 40px;
@@ -305,8 +338,10 @@
         </div>
         <nav>
             <a href="#">Home</a>
-            <a href="#about">About Assignment</a>
-            <a href="/docs">API Documentation</a>
+            <a href="#about">About</a>
+            <a href="/docs">API</a>
+            <a href="https://github.com/2024ab05112/dog-breed-prediction" target="_blank"><i class="fab fa-github"></i>
+                GitHub</a>
         </nav>
     </header>
 
@@ -325,7 +360,6 @@
                 {% csrf_token %}
                 <label for="imageUpload" class="upload-area">
                     <div class="upload-icon">
-                        <!-- SVG Upload Cloud Icon -->
                         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#5c2d91" stroke-width="2"
                             stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -430,6 +464,19 @@
                 <p>Integrated with <strong>Prometheus & Grafana</strong> for real-time monitoring of inference latency,
                     request counts, and system health.</p>
             </div>
+        </div>
+
+        <!-- Project Links -->
+        <div class="links-grid">
+            <a href="https://github.com/2024ab05112/dog-breed-prediction" target="_blank" class="link-btn">
+                <i class="fab fa-github"></i> GitHub Repo
+            </a>
+            <a href="/grafana" target="_blank" class="link-btn">
+                <i class="fas fa-chart-line"></i> Grafana Dashboard
+            </a>
+            <a href="/prometheus" target="_blank" class="link-btn">
+                <i class="fas fa-server"></i> Prometheus
+            </a>
         </div>
     </div>
 
