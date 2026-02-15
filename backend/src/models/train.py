@@ -41,46 +41,35 @@ def download_and_extract_data():
 
 mlflow.set_experiment("cats_vs_dogs_transfer_learning")
 
+import tensorflow_datasets as tfds
+
+def preprocess(image, label):
+    image = tf.image.resize(image, (224, 224))
+    image = tf.cast(image, tf.float32) / 255.0
+    return image, label
+
 def main():
+    print("Downloading dataset using TensorFlow Datasets...")
     
-    # Download Data
-    dataset_path = download_and_extract_data()
-    
-    # If standard path doesn't exist, use the downloaded one
-    train_dir = os.path.join(dataset_path, "train")
-    val_dir = os.path.join(dataset_path, "validation")
-    
-    # Verify directories exist
-    if not os.path.exists(train_dir):
-        print(f"Error: Train directory not found at {train_dir}")
-        return
-
-    train_gen = ImageDataGenerator(
-        rescale=1./255,
-        rotation_range=20,
-        zoom_range=0.2,
-        horizontal_flip=True
-    )
-
-    test_gen = ImageDataGenerator(rescale=1./255)
-
-    train_data = train_gen.flow_from_directory(
-        train_dir,
-        target_size=(224, 224),
-        batch_size=BATCH_SIZE,
-        class_mode="binary"
-    )
-
-    val_data = test_gen.flow_from_directory(
-        val_dir,
-        target_size=(224, 224),
-        batch_size=BATCH_SIZE,
-        class_mode="binary",
-        shuffle=False
+    # Load Cats vs Dogs dataset using TFDS
+    # We use 'train[:20%]' to keep data small for quick CI training
+    # For real training, remove [:20%] or increase percentage
+    dataset, info = tfds.load(
+        'cats_vs_dogs', 
+        split='train[:20%]', 
+        as_supervised=True, 
+        with_info=True
     )
     
-    # For test, we reuse validation set for simplicity in this pipeline context
-    test_data = val_data
+    # Create validation split from the remaining data if needed, or just split train
+    # Here we split the 20% into 80% train / 20% val
+    train_size = int(0.8 * len(dataset))
+    train_ds = dataset.take(train_size)
+    val_ds = dataset.skip(train_size)
+    
+    # Apply preprocessing pipeline
+    train_ds = train_ds.map(preprocess).start_async().shuffle(1000).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+    val_ds = val_ds.map(preprocess).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
     model = build_baseline_cnn()
 
@@ -89,35 +78,45 @@ def main():
         mlflow.log_param("batch_size", BATCH_SIZE)
 
         history = model.fit(
-            train_data,
-            validation_data=val_data,
+            train_ds,
+            validation_data=val_ds,
             epochs=EPOCHS
         )
 
-        # ---------- Evaluate on test ----------
-        y_true = test_data.classes
-        y_prob = model.predict(test_data)
-        y_pred = (y_prob > 0.5).astype(int).flatten()
+        # ---------- Confusion Matrix & Evaluation ----------
+        # Evaluate on validation set
+        y_true = []
+        y_pred = []
+        
+        # Iterate over validation dataset to get predictions
+        for images, labels in val_ds:
+            preds = model.predict(images)
+            y_true.extend(labels.numpy())
+            y_pred.extend((preds > 0.5).astype(int).flatten())
+        
+        y_true = np.array(y_true)
+        y_pred = np.array(y_pred)
 
-        # ---------- Confusion Matrix ----------
         os.makedirs("artifacts", exist_ok=True)
         cm_path = "artifacts/confusion_matrix.png"
 
-        plot_confusion_matrix(
-            y_true=y_true,
-            y_pred=y_pred,
-            class_names=["Cat", "Dog"],
-            save_path=cm_path
-        )
-
-        mlflow.log_artifact(cm_path)
+        try:
+            plot_confusion_matrix(
+                y_true=y_true,
+                y_pred=y_pred,
+                class_names=["Cat", "Dog"],
+                save_path=cm_path
+            )
+            mlflow.log_artifact(cm_path)
+        except Exception as e:
+            print(f"Warning: Could not plot CM: {e}")
 
         # ---------- Save model ----------
         model.save("model.h5")
         mlflow.log_artifact("model.h5")
 
         # ---------- Log metrics ----------
-        test_loss, test_acc = model.evaluate(test_data)
+        test_loss, test_acc = model.evaluate(val_ds)
         mlflow.log_metric("test_accuracy", test_acc)
         mlflow.log_metric("test_loss", test_loss)
 
