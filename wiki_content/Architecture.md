@@ -58,10 +58,13 @@ All external requests are handled by the **Nginx Ingress Controller**. This arch
 
 ### 2. Implementation Overview
 - **Routing**: Traffic is routed based on the URL path (`/` for Frontend, `/api` for Backend, etc.).
-- **Isolation**: Each component runs in separate pods, ensuring that a failure in one (e.g., monitoring) does not affect the prediction engine.
-- **Scalability**: The backend API and Frontend can be scaled horizontally (replicas) independently.
 
-### 3. Monitoring Workflow
+### 3. Model Training Pipeline (CI/CT)
+- **Architecture**: Uses **MobileNetV2** (pre-trained on ImageNet) as a feature extractor with a custom classification head.
+- **Dataset**: Automatically downloads a subset of the "Cats vs Dogs" dataset using `tensorflow_datasets` (TFDS).
+- **Automation**: The model is retrained on every backend code push within the GitHub Actions runner before building the Docker image. This ensures the deployed model is always fresh and reproducible.
+
+### 4. Monitoring Workflow
 - **Metrics Collection**: Prometheus automatically scrapes telemetry from the FastAPI pods.
 - **Visualization**: Grafana queries Prometheus and displays real-time health data (RPS, Latency) on a pre-configured "Dog Breed API" dashboard.
 - **Access**: Both tools are accessible at the `/prometheus` and `/grafana` endpoints respectively.
