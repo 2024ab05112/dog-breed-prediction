@@ -45,7 +45,7 @@ spec:
               number: 80
       # Documentation (FastAPI Docs)
       - path: /docs
-        pathType: Prefix
+        pathType: Exact
         backend:
           service:
             name: dog-breed-api
@@ -53,7 +53,7 @@ spec:
               number: 80
       # OpenAPI JSON
       - path: /openapi.json
-        pathType: Prefix
+        pathType: Exact
         backend:
           service:
             name: dog-breed-api
