@@ -13,7 +13,7 @@ BATCH_SIZE = 32
 EPOCHS = 1
 
 # Trigger model training pipeline with MLflow for real this time
-# Now that OOM is fixed and artifact serving is enabled, this should inject data correctly
+# Now that OOM is fixed and proxied artifact serving destination is enabled
 MLFLOW_URL = "https://dog-breed-prediction.centralindia.cloudapp.azure.com/mlflow"
 mlflow.set_tracking_uri(MLFLOW_URL)
 
