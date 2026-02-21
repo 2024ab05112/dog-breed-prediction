@@ -11,7 +11,8 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
-    # MLflow natively handles the proxy path through MLFLOW_PROXY_PATH
+    # Essential for stripping the /mlflow prefix before sending it to the pod
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   tls:
     - hosts:
@@ -21,9 +22,9 @@ spec:
   - host: dog-breed-prediction.centralindia.cloudapp.azure.com
     http:
       paths:
-      # No regex needed since MLflow handles its own subpath
-      - path: /mlflow
-        pathType: Prefix
+      # Use Regex and exact stripping
+      - path: /mlflow(/|$)(.*)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: mlflow-service
