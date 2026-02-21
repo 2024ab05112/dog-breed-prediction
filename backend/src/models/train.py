@@ -12,6 +12,9 @@ DATA_DIR = "data/processed"
 BATCH_SIZE = 32
 EPOCHS = 1
 
+MLFLOW_URL = "https://dog-breed-prediction.centralindia.cloudapp.azure.com/mlflow"
+mlflow.set_tracking_uri(MLFLOW_URL)
+
 mlflow.set_experiment("cats_vs_dogs_baseline")
 
 # Function to download small subset dataset

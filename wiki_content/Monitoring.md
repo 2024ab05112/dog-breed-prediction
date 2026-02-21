@@ -17,10 +17,16 @@ Grafana provides a visual interface for the metrics collected by Prometheus.
     - **Success Rate**: Ratio of successful vs failed predictions.
     - **Latency**: 95th and 99th percentile response times.
 
+### 3. MLflow Tracking server
+MLflow tracks training experiments, parameters, and logs models.
+- **Endpoint**: `/mlflow`
+- **Features**: Visualizing experiment runs, comparing training vs validation loss/accuracy, model registry and artifacts downloading (`.h5` model files).
+
 ## How to Access
 Once the system is deployed, the monitoring tools are available at:
-`http://dog-breed-prediction.centralindia.cloudapp.azure.com/grafana/`
-`http://dog-breed-prediction.centralindia.cloudapp.azure.com/prometheus/`
+`https://dog-breed-prediction.centralindia.cloudapp.azure.com/grafana/`
+`https://dog-breed-prediction.centralindia.cloudapp.azure.com/prometheus/`
+`https://dog-breed-prediction.centralindia.cloudapp.azure.com/mlflow/`
 
 ## Metrics Customization
 Metrics are generated using the `prometheus-fastapi-instrumentator` library in the Backend FastAPI service. The key metrics tracked are:

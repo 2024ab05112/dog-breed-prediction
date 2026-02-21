@@ -16,7 +16,7 @@ This repository contains an end-to-end MLOps solution for predicting dog breeds 
 - **Containerization**: Docker
 - **Orchestration**: Kubernetes (AKS)
 - **CI/CD**: GitHub Actions
-- **Monitoring**: Prometheus, Grafana, prometheus-fastapi-instrumentator
+- **Monitoring**: Prometheus, Grafana, MLflow, prometheus-fastapi-instrumentator
 - **Cloud Provider**: Microsoft Azure
 
 ## Live Demo
@@ -24,6 +24,7 @@ This repository contains an end-to-end MLOps solution for predicting dog breeds 
 - **API Docs**: [https://dog-breed-prediction.centralindia.cloudapp.azure.com/docs](https://dog-breed-prediction.centralindia.cloudapp.azure.com/docs)
 - **Grafana**: [https://dog-breed-prediction.centralindia.cloudapp.azure.com/grafana/](https://dog-breed-prediction.centralindia.cloudapp.azure.com/grafana/)
 - **Prometheus**: [https://dog-breed-prediction.centralindia.cloudapp.azure.com/prometheus/](https://dog-breed-prediction.centralindia.cloudapp.azure.com/prometheus/)
+- **MLflow**: [https://dog-breed-prediction.centralindia.cloudapp.azure.com/mlflow/](https://dog-breed-prediction.centralindia.cloudapp.azure.com/mlflow/)
 
 ## Project Structure
 ```
