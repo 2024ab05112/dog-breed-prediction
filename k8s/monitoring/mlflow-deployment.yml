@@ -37,6 +37,7 @@ spec:
           - --port=5000
           - --backend-store-uri=sqlite:////mlflow/mlruns.db
           - --default-artifact-root=/mlflow/artifacts
+          - --serve-artifacts
         env:
           - name: MLFLOW_PROXY_PATH
             value: "/mlflow"
