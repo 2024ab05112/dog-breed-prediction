@@ -36,6 +36,24 @@ jobs:
               - 'k8s/**'
               - '.github/workflows/**'
 
+  start-cluster:
+    needs: check-changes
+    if: needs.check-changes.outputs.backend == 'true' || needs.check-changes.outputs.frontend == 'true' || needs.check-changes.outputs.k8s == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Start AKS Cluster
+        run: az aks start --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --no-wait || true
+
+      - name: Wait for Cluster to be Running
+        run: |
+          echo "Waiting for AKS cluster to be in Succeeded state..."
+          az aks wait --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --created --interval 10 --timeout 300
+
   unit-test:
     needs: check-changes
     if: needs.check-changes.outputs.backend == 'true'
@@ -68,7 +86,7 @@ jobs:
 
   # New dedicated job for Model Training (Visualization & Modularity)
   train-model:
-    needs: [check-changes, unit-test]
+    needs: [check-changes, unit-test, start-cluster]
     if: needs.check-changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -171,14 +189,6 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Start AKS Cluster
-        run: az aks start --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --no-wait || true
-
-      - name: Wait for Cluster to be Running
-        run: |
-          echo "Waiting for AKS cluster to be in Succeeded state..."
-          az aks wait --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --created --interval 10 --timeout 300
 
       - name: Set AKS Context
         uses: azure/aks-set-context@v3
