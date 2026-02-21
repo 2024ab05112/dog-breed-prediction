@@ -49,11 +49,11 @@ spec:
         - containerPort: 5000
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "200m"
+            memory: "300Mi"
+            cpu: "100m"
           limits:
-            memory: "1Gi"
-            cpu: "500m"
+            memory: "800Mi"
+            cpu: "400m"
       volumes:
         - name: mlflow-data
           persistentVolumeClaim:
