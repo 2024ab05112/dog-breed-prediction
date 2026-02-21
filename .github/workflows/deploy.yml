@@ -245,6 +245,7 @@ jobs:
           kubectl apply -f k8s/common/ingress.yml
           kubectl apply -f k8s/backend/backend-deployment.yml
           kubectl apply -f k8s/backend/backend-service.yml
+          kubectl apply -f k8s/backend/backend-hpa.yml
           kubectl apply -f k8s/frontend/frontend-deployment.yml
           # Removed redundant frontend-service reference as it's merged
           
