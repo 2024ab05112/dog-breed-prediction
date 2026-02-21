@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mlflow-ingress
+  labels:
+    app.kubernetes.io/name: mlflow-gateway
+    app.kubernetes.io/part-of: dog-breed-prediction
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    # Essential for stripping the /mlflow prefix before sending it to the pod
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  tls:
+    - hosts:
+        - dog-breed-prediction.centralindia.cloudapp.azure.com
+      secretName: dog-breed-tls
+  rules:
+  - host: dog-breed-prediction.centralindia.cloudapp.azure.com
+    http:
+      paths:
+      # Use Regex and exact stripping
+      - path: /mlflow(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: mlflow-service
+            port:
+              number: 5000

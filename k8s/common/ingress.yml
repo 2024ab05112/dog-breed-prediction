@@ -32,14 +32,7 @@ spec:
             name: grafana
             port:
               number: 3000
-      # MLflow Dashboard
-      - path: /mlflow
-        pathType: Prefix
-        backend:
-          service:
-            name: mlflow-service
-            port:
-              number: 5000
+
       # Prometheus Metrics
       - path: /prometheus
         pathType: Prefix

@@ -246,6 +246,7 @@ jobs:
           kubectl apply -f k8s/monitoring/grafana-dashboards.yml
           kubectl apply -f k8s/monitoring/mlflow-deployment.yml
           kubectl apply -f k8s/monitoring/mlflow-service.yml
+          kubectl apply -f k8s/monitoring/mlflow-ingress.yml
 
   # Dedicated Smoke Test Job (Visualization)
   smoke-test:
