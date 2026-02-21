@@ -12,7 +12,8 @@ DATA_DIR = "data/processed"
 BATCH_SIZE = 32
 EPOCHS = 1
 
-# Trigger model training pipeline with MLflow
+# Trigger model training pipeline with MLflow for real this time
+# Now that OOM is fixed, this should inject data correctly
 MLFLOW_URL = "https://dog-breed-prediction.centralindia.cloudapp.azure.com/mlflow"
 mlflow.set_tracking_uri(MLFLOW_URL)
 
