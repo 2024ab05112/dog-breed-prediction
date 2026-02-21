@@ -33,7 +33,7 @@ spec:
             port:
               number: 3000
       # MLflow Dashboard
-      - path: /mlflow/?(.*)
+      - path: /mlflow
         pathType: Prefix
         backend:
           service:
