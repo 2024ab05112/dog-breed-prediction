@@ -44,7 +44,7 @@ def download_and_extract_data():
     # We will point the generators to the downloaded location directly to keep it simple
     return dataset_dir
 
-mlflow.set_experiment("cats_vs_dogs_transfer_learning_v2")
+mlflow.set_experiment("cats_vs_dogs_final_proxied")
 
 import tensorflow_datasets as tfds
 
