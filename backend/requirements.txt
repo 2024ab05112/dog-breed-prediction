@@ -1,25 +1,25 @@
 # Core ML
-tensorflow
-numpy
-pillow
-scikit-learn
+tensorflow==2.20.0
+numpy==2.4.2
+pillow==12.1.1
+scikit-learn==1.8.0
 
 # Experiment Tracking
-mlflow
+mlflow==3.10.0
 
 # Data Versioning
-dvc
+dvc==3.66.1
 
 # Visualization (for confusion matrix, curves)
-matplotlib
-seaborn
+matplotlib==3.10.8
+seaborn==0.13.2
 
 # Utilities
-pyyaml
-tqdm
-fastapi
-uvicorn
-python-multipart
-httpx
-prometheus-fastapi-instrumentator
-tensorflow-datasets
+pyyaml==6.0.3
+tqdm==4.67.3
+fastapi==0.129.1
+uvicorn==0.41.0
+python-multipart==0.0.22
+httpx==0.28.1
+prometheus-fastapi-instrumentator==7.1.0
+tensorflow-datasets==4.9.9

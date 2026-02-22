@@ -3,7 +3,7 @@
 The backend service is built using **FastAPI** and exposes RESTful endpoints for prediction and monitoring.
 
 ## Base URL
-Public Entry Point (via Ingress): `https://dog-breed-prediction.centralindia.cloudapp.azure.com/api`
+Public Entry Point (via Ingress): `https://dog-breed-prediction.centralindia.cloudapp.azure.com/`
 
 ## Endpoints
 
