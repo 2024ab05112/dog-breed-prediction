@@ -13,7 +13,7 @@ dvc==3.66.1
 # Visualization (for confusion matrix, curves)
 matplotlib==3.10.8
 seaborn==0.13.2
- 
+  
 # Utilities
 pyyaml==6.0.3
 tqdm==4.67.3

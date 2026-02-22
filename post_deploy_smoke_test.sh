@@ -3,7 +3,7 @@
 # Simple smoke test to verify the deployed application is responsive
 
 # URL of the deployed application
-BASE_URL="http://dog-breed-prediction.centralindia.cloudapp.azure.com"
+BASE_URL="https://dog-breed-prediction.centralindia.cloudapp.azure.com"
 MAX_RETRIES=10
 SLEEP_TIME=10
 
@@ -35,10 +35,10 @@ check_endpoint() {
 }
 
 # 1. Check Frontend Availability (Root)
-# if ! check_endpoint "/" 200; then
-#     echo "Frontend check failed!"
-#     exit 1
-# fi
+if ! check_endpoint "/" 200; then
+    echo "Frontend check failed!"
+    exit 1
+fi
 
 # 2. Check Backend Health API (Root directly based on backend deployment)
 # Note: The health endpoint is exposed at /api/health or /health via Ingress depending on config.
