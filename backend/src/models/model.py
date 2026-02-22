@@ -8,7 +8,7 @@ def build_baseline_cnn(input_shape=(224, 224, 3)):
         include_top=False,
         weights="imagenet"
     )
-    
+     
     # Freeze the base model
     base_model.trainable = False
 
